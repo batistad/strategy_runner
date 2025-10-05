@@ -1,0 +1,36 @@
+market: XNAS
+session_buffer_minutes: 15
+symbols: [ 'NKE', 'PG', 'SHW','TRV', 'UNH', 'CRM','NVDA', 'VZ','WMT','DIS']
+
+params:
+  name: crossover           # crossover | momentum
+  defaults:
+    ma_type: EMA            # SMA, EMA, WMA, HMA, ALMA, DEMA, TEMA, TRIMA, VWMA, KAMA
+    fast: 55
+    slow: 155
+    shorting: none          # none | short_only | long_short
+    chandelier_len: null    # e.g., 5 (or null to disable)
+    chandelier_mult: null   # e.g., 3.0
+    resample: D             # optional pandas offset alias (e.g., W, M)
+  per_symbol:
+    NKE: { ma_type: SMA, fast: 34, slow: 144 }
+    PG: { shorting: long_short, chandelier_len: 5, chandelier_mult: 3 }
+
+risk:
+  max_weight: 0.33
+  cash_buffer: 0.02
+
+data:
+  provider: yahoo
+  interval: 1d
+  history_days: 400
+
+webhook:
+  enabled: true
+  url_env: WEBHOOK_URL
+  secret_env: WEBHOOK_SECRET
+  send_metrics: true
+  timeout: 10
+
+state:
+  path: ./.runner_state.json

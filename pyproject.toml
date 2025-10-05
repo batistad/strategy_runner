@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "strategy-runner"
+version = "0.1.0"
+description = "Config-driven daily runner for trading strategies"
+authors = [{name = "You"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+"pandas>=2.2",
+"numpy>=1.26",
+"pyyaml>=6.0",
+"requests>=2.31",
+"exchange-calendars>=4.5",
+"python-dotenv>=1.0",
+]
+
+
+[project.optional-dependencies]
+yahoo = ["yfinance>=0.2"]
+
+
+[project.scripts]
+strategyrunner = "strategyrunner.cli:main"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]

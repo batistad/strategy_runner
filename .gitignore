@@ -1,0 +1,49 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual envs
+venv/
+.venv/
+env/
+venvs/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+*.whl
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Logs, state, secrets
+logs/
+*.log
+.runner_state.json
+.env
+.env.*
+local_settings.py
+run_daily.ps1
+
+# Test / coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Optional caches
+yfinance_cache/
