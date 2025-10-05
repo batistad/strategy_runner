@@ -29,19 +29,11 @@ def fetch_eod(
         for sym in symbols:
             sdf = df[
                 sym
-            ]  # .rename(columns={"Open":"open","High":"high","Low":"low","Close":"close","Volume":"volume"})
+            ] 
             sdf.index.name = "date"
             out[sym] = sdf.reset_index()
     else:
-        sdf = df.rename(
-            columns={
-                "Open": "open",
-                "High": "high",
-                "Low": "low",
-                "Close": "close",
-                "Volume": "volume",
-            }
-        )
+        sdf = df.copy()
         sdf.index.name = "date"
         out[list(symbols)[0]] = sdf.reset_index()
     return out
