@@ -189,6 +189,7 @@ class StrategyParams:
     shorting: str = "none"  # none | short_only | long_short
     chandelier_len: Optional[int] = None
     chandelier_mult: Optional[float] = None
+    actions_mode: str = "verbose"  # "verbose" | "simple" | "target"
 
 
 # --- internals ---
@@ -235,10 +236,23 @@ def _apply_overlays(
     )
 
 
-def _action_from_transition(prev: int, curr: int) -> str:
+def _action_from_transition(prev: int, curr: int, mode: str = "verbose") -> str | dict:
+    if mode == "target":
+        return {"type": "TARGET", "target": int(curr)}
+
+    if mode == "simple":
+        if prev == curr:
+            return "HOLD"
+        if curr == 1:
+            return "BUY"  # ENTERLONG
+        if curr == -1:
+            return "SELL"  # ENTERSHORT
+        # curr == 0
+        return "CLOSELONG" if prev == 1 else "CLOSESHORT"
+
+    # verbose (default)
     if prev == curr:
         return "HOLD"
-    trans = (prev, curr)
     mapping = {
         (0, 1): "BUY",
         (1, 0): "SELL",
@@ -247,7 +261,7 @@ def _action_from_transition(prev: int, curr: int) -> str:
         (1, -1): "FLIP_TO_SHORT",
         (-1, 1): "FLIP_TO_LONG",
     }
-    return mapping.get(trans, "HOLD")
+    return mapping.get((prev, curr), "HOLD")
 
 
 # --- public API ---
@@ -260,7 +274,7 @@ def run_strategy(
 ) -> Tuple[List[dict], dict, Dict[str, int]]:
     """Return explicit actions per symbol and new last_signals.
     Output trades entries:
-      {symbol, action, signal_prev, signal_curr}
+      {symbol, action|type, target?, signal_prev, signal_curr}
     """
     signals_curr: Dict[str, int] = {}
     trades: List[dict] = []
@@ -271,21 +285,25 @@ def run_strategy(
             continue
         sig_t1 = _signal_from_ma(df, p)
         sig_final = _apply_overlays(df, sig_t1, p)
-        s = int(sig_final.iloc[-1]) if len(sig_final) else 0
+        s = int(sig_final.iloc[-1]) if len(sig_final) else int(last_signals.get(sym, 0))
         signals_curr[sym] = s
 
     for sym in data.keys():
         curr = signals_curr.get(sym, 0)
         prev = int(last_signals.get(sym, 0))
-        action = _action_from_transition(prev, curr)
-        trades.append(
-            {
-                "symbol": sym,
-                "action": action,
-                "signal_prev": prev,
-                "signal_curr": curr,
-            }
-        )
+        p = params_by_symbol.get(sym)
+        mode = getattr(p, "actions_mode", "verbose") if p else "verbose"
+        action = _action_from_transition(prev, curr, mode)
+        trade = {
+            "symbol": sym,
+            "signal_prev": prev,
+            "signal_curr": curr,
+        }
+        if isinstance(action, dict):  # target mode
+            trade.update(action)
+        else:
+            trade["action"] = action
+        trades.append(trade)
 
     metrics = {
         "universe": len(data),

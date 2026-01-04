@@ -1,6 +1,99 @@
 market: XNAS
 session_buffer_minutes: 15
-symbols: [ 'NKE', 'PG', 'SHW','TRV', 'UNH', 'CRM','NVDA', 'VZ','WMT','DIS']
+symbols: [ 'TSLA', 'NVDA']
+
+# Optionally define named webhooks once and reuse them
+webhooks:
+  zapier_metatrader:
+    enabled: true
+    url_env: ZAPIER_METATRADER_URL
+    secret_env: null
+    send_metrics: false
+    timeout: 8
+    message_template: "{action_or_target},{symbol},{trade[qty]}"
+  zapier:
+    enabled: true
+    url_env: WEBHOOK_URL
+    secret_env: null
+    send_metrics: true
+    timeout: 10
+    message_template: "Test {symbol}"
+  ibkr_exec:
+    enabled: true
+    url_env: EXECUTOR_URL
+    send_metrics: true                 # optional
+    timeout: 10
+
+
+instances:
+  - id: TSLA-long
+    symbol: TSLA
+    webhook: ibkr_exec
+    sizing:               # OPTIONAL per-instance sizing override
+      mode: notional      # fixed | notional | percent_of_cash
+      notional: 1000      # used when mode=notional
+      lot_size: 1         # round down to multiple
+      min_qty: 1
+    overrides:
+      ma_type: VWMA
+      fast: 5
+      slow: 13
+      shorting: none
+      chandelier_len: 8
+      chandelier_mult: 2
+      resample: D 
+      actions_mode: verbose
+  - id: TSLA-short
+    symbol: TSLA
+    webhook: ibkr_exec
+    sizing:               # OPTIONAL per-instance sizing override
+      mode: notional      # fixed | notional | percent_of_cash
+      notional: 1000      # used when mode=notional
+      lot_size: 1         # round down to multiple
+      min_qty: 1
+    overrides:
+      ma_type: ALMA
+      fast: 13
+      slow: 35
+      shorting: short_only
+      chandelier_len: 13
+      chandelier_mult: 2
+      resample: 2B
+      actions_mode: verbose 
+  - id: NVDA-long
+    symbol: NVDA
+    webhook: zapier_metatrader
+    sizing:               # OPTIONAL per-instance sizing override
+      mode: notional      # fixed | notional | percent_of_cash
+      notional: 5000      # used when mode=notional
+      lot_size: 1         # round down to multiple
+      min_qty: 1
+    overrides:
+      ma_type: VWMA
+      fast: 5
+      slow: 13
+      shorting: none
+      chandelier_len: 13
+      chandelier_mult: 2
+      resample: 2B
+      actions_mode: simple
+  - id: NVDA-short
+    symbol: NVDA
+    webhook: zapier_metatrader
+    sizing:               # OPTIONAL per-instance sizing override
+      mode: notional      # fixed | notional | percent_of_cash
+      notional: 5000      # used when mode=notional
+      lot_size: 1         # round down to multiple
+      min_qty: 1
+    overrides:
+      ma_type: SMA
+      fast: 13
+      slow: 5
+      shorting: short_only
+      chandelier_len: 13
+      chandelier_mult: 3
+      resample: D
+      actions_mode: simple
 
 params:
   name: crossover           # crossover | momentum
@@ -13,12 +106,22 @@ params:
     chandelier_mult: null   # e.g., 3.0
     resample: D             # optional pandas offset alias (e.g., W, M)
   per_symbol:
-    NKE: { ma_type: SMA, fast: 34, slow: 144 }
-    PG: { shorting: long_short, chandelier_len: 5, chandelier_mult: 3 }
+    
 
 risk:
   max_weight: 0.33
   cash_buffer: 0.02
+
+# DEFAULT sizing if instance.sizing is not specified
+sizing:
+  mode: notional            # fixed | notional | percent_of_cash
+  fixed_qty: 1              # used when mode=fixed
+  notional: 1000            # used when mode=notional
+  percent: 0.05             # used when mode=percent_of_cash (5%)
+  cash_env: CASH_USD        # env var with current free cash (optional)
+  lot_size: 1               # share/contract multiple
+  min_qty: 1
+  price_source: close       # close (EOD close)
 
 data:
   provider: yahoo
