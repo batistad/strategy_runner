@@ -21,6 +21,7 @@ This README focuses on project-wide usage and the crossover strategy implementat
 - Development & testing
 - Files of interest
 - Next steps
+- Adding a new strategy
 
 ---
 
@@ -134,6 +135,13 @@ pytest -q
 ```
 - Logging setup is in `src/strategyrunner/utils/logging.py`.
 - State file default: `.runner_state.json` (ignored by .gitignore).
+
+## Adding a new strategy
+- Place implementation under `src/strategyrunner/strategies/` and expose a `StrategyParams` dataclass plus a `run_strategy()` entry point similar to `crossover.py` or `momentum.py`.
+- Keep inputs normalized to Title-case OHLCV columns; reuse `normalize_ohlcv` from `strategyrunner.data.base` if your data source is not already aligned.
+- Add a selector branch in `pipelines/daily.py` to wire the new strategy, including how params are parsed from config and how results map to trades.
+- Create focused unit tests under `tests/` that exercise the signal logic and any overlays/cooldowns to prevent regressions.
+- Document strategy-specific config keys in this README so operators know how to tune it.
 
 ---
 
