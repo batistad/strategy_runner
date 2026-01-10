@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 
+from strategyrunner.data.base import normalize_ohlcv
+
 
 @dataclass
 class StrategyParams:
@@ -16,12 +18,13 @@ class StrategyParams:
 
 
 def compute_signal(df: pd.DataFrame, lookback: int, min_volume: int) -> float:
-    d = df.tail(lookback)
+    clean = normalize_ohlcv(df, required=("Open", "High", "Low", "Close", "Volume"))
+    d = clean.tail(lookback)
     if len(d) < lookback:
         return float("nan")
-    if d["volume"].mean() < min_volume:
+    if d["Volume"].mean() < min_volume:
         return float("nan")
-    return (d["close"].iloc[-1] / d["close"].iloc[0]) - 1.0
+    return (d["Close"].iloc[-1] / d["Close"].iloc[0]) - 1.0
 
 
 def run_strategy(
